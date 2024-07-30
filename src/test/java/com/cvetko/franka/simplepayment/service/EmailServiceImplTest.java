@@ -3,7 +3,6 @@ package com.cvetko.franka.simplepayment.service;
 import com.cvetko.franka.simplepayment.model.Customer;
 import com.cvetko.franka.simplepayment.model.Transaction;
 import com.cvetko.franka.simplepayment.service.implementation.EmailServiceImpl;
-import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,23 +40,13 @@ public class EmailServiceImplTest {
     }
 
     @Test
-    void testSendEmail() {
-        MimeMessage mimeMessageMock = mock(MimeMessage.class);
-        when(emailSender.createMimeMessage()).thenReturn(mimeMessageMock);
-
-        emailService.sendEmail("test@example.com", "Test Subject", "Test Body");
-
-        verify(emailSender).send(any(MimeMessage.class));
-    }
-
-    @Test
     void testSendEmailImpl_SentTransaction(){
         MimeMessage mimeMessageMock = mock(MimeMessage.class);
         when(emailSender.createMimeMessage()).thenReturn(mimeMessageMock);
 
         BigDecimal currentBalance = new BigDecimal("500");
 
-        emailService.sendEmailImpl(testTransaction, "123456789", testCustomer, true, currentBalance);
+        emailService.sendEmailImpl(testTransaction, "123456789", testCustomer, currentBalance, true);
 
         verify(emailSender).send(any(MimeMessage.class));
     }
@@ -69,7 +58,7 @@ public class EmailServiceImplTest {
 
         BigDecimal currentBalance = new BigDecimal("500");
 
-        emailService.sendEmailImpl(testTransaction, "123456789", testCustomer, false, currentBalance);
+        emailService.sendEmailImpl(testTransaction, "123456789", testCustomer, currentBalance, false);
 
         verify(emailSender).send(any(MimeMessage.class));
     }

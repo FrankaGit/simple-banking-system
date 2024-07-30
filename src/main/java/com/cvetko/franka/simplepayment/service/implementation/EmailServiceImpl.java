@@ -18,22 +18,7 @@ public class EmailServiceImpl implements EmailService {
     private JavaMailSender emailSender;
 
     @Override
-    public void sendEmail(String sendTo, String subject, String body) {
-
-        MimeMessage message = emailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message);
-        try {
-            helper.setTo(sendTo);
-            helper.setSubject(subject);
-            helper.setText(body, true); // true indicates HTML content
-            emailSender.send(message);
-        } catch (MessagingException e) {
-            e.printStackTrace(); // Handle any exceptions properly
-        }
-    }
-
-    @Override
-    public void sendEmailImpl(Transaction transaction, String accountNumber, Customer customer, boolean sent, BigDecimal currentBalance) {
+    public void sendEmailImpl(Transaction transaction, String accountNumber, Customer customer, BigDecimal currentBalance, boolean sent) {
 
         BigDecimal oldBalance;
         String addedTaken = sent ? "taken from" : "added to";
@@ -46,7 +31,7 @@ public class EmailServiceImpl implements EmailService {
         String body = String.format("Hello!" + System.lineSeparator() +
                         "The transaction with ID: %s has been processed successfully," +
                         "  and the balance: %s has been %s your account." + System.lineSeparator() +
-                        "  Old balance: %s" + System.lineSeparator() + "  New balance: %s\n" + System.lineSeparator() +
+                        "  Old balance: %s" + System.lineSeparator() + "  New balance: %s" + System.lineSeparator() +
                         "Regards," + System.lineSeparator() +
                         "  Your XYZ bank",
                 transaction.getTransactionId().toString(),
@@ -56,5 +41,19 @@ public class EmailServiceImpl implements EmailService {
                 currentBalance
         );
         sendEmail(customer.getEmail(), "Bank notification", body);
+    }
+
+    private void sendEmail(String sendTo, String subject, String body) {
+
+        MimeMessage message = emailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message);
+        try {
+            helper.setTo(sendTo);
+            helper.setSubject(subject);
+            helper.setText(body, true); // true indicates HTML content
+            emailSender.send(message);
+        } catch (MessagingException e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -90,8 +90,8 @@ public class TransactionServiceImplTest {
         verify(accountService, times(1)).findByAccountNumber("RECEIVER123");
         verify(accountService, times(1)).save(senderAccount);
         verify(accountService, times(1)).save(receiverAccount);
-        verify(emailService, times(1)).sendEmailImpl(transaction, "SENDER123", senderAccount.getCustomer(), true, new BigDecimal("800.00"));
-        verify(emailService, times(1)).sendEmailImpl(transaction, "RECEIVER123", receiverAccount.getCustomer(), false, new BigDecimal("700.00"));
+        verify(emailService, times(1)).sendEmailImpl(transaction, "SENDER123", senderAccount.getCustomer(), new BigDecimal("800.00"), true);
+        verify(emailService, times(1)).sendEmailImpl(transaction, "RECEIVER123", receiverAccount.getCustomer(), new BigDecimal("700.00"), false);
     }
 
 

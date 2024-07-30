@@ -79,8 +79,8 @@ public class TransactionServiceImpl implements TransactionService {
 
 
     private void handleBothEmails(Transaction transaction, Account sender, Account receiver) {
-        emailService.sendEmailImpl(transaction, sender.getAccountNumber(), sender.getCustomer(), true, sender.getBalance());
-        emailService.sendEmailImpl(transaction, receiver.getAccountNumber(), receiver.getCustomer(), false, receiver.getBalance());
+        emailService.sendEmailImpl(transaction, sender.getAccountNumber(), sender.getCustomer(), sender.getBalance(), true);
+        emailService.sendEmailImpl(transaction, receiver.getAccountNumber(), receiver.getCustomer(), receiver.getBalance(), false);
     }
 
     private void updateBalances(Transaction transaction, Account sender, Account receiver) {
