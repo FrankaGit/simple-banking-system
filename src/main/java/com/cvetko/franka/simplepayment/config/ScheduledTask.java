@@ -3,6 +3,7 @@ package com.cvetko.franka.simplepayment.config;
 import com.cvetko.franka.simplepayment.service.interfaces.AccountService;
 import com.cvetko.franka.simplepayment.service.interfaces.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -12,8 +13,8 @@ public class ScheduledTask {
     @Autowired
     TransactionService transactionService;
 
-/*    @Scheduled(cron = "0 0 0 1 * *")
+    @Scheduled(cron = "0 0 0 1 * *")
     public void task1() {
-        accountService.getAllAccounts().forEach(account -> accountService.getLastMonthTurnOver(account, transactionService));
-    }*/
+        accountService.getAllAccounts().forEach(account -> accountService.calculateLastMonthTurnover(transactionService));
+    }
 }
