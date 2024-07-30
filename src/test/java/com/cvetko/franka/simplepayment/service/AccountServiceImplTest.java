@@ -76,13 +76,6 @@ public class AccountServiceImplTest {
     }
 
     @Test
-    void testSaveAccountIfNew() {
-        given(accountRepository.findByAccountName("123456")).willReturn(null);
-        accountServiceImpl.saveAccountIfNew(account);
-        verify(accountRepository).save(account);
-    }
-
-    @Test
     void testGetAllAccounts() {
         List<Account> accounts = Arrays.asList(account);
         given(accountRepository.findAll()).willReturn(accounts);

@@ -12,7 +12,6 @@ import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,13 +30,6 @@ public class AccountServiceImpl implements AccountService {
     public Account saveAccount(Account account) {
         return accountRepository.save(account);
 
-    }
-
-    @Override
-    public void saveAccountIfNew(Account account) {
-        if (Objects.isNull(accountRepository.findByAccountName(account.getAccountNumber()))) {
-            accountRepository.save(account);
-        }
     }
 
     @Override

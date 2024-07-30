@@ -1,5 +1,6 @@
-package com.cvetko.franka.simplepayment.model;
+package com.cvetko.franka.simplepayment.model.dto;
 
+import com.cvetko.franka.simplepayment.model.Customer;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -12,7 +13,7 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Account {
+public class AccountDTO {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,14 +27,14 @@ public class Account {
     @JsonBackReference
     private Customer customer;
 
-    public Account(Integer id, String accountNumber) {
-        this.setAccountId(id);
+    public AccountDTO(String accountNumber) {
         this.setAccountNumber(accountNumber);
     }
 
-    public Account(String accountNumber) {
-        this.setAccountNumber(accountNumber);
+    public synchronized void updateBalance(BigDecimal amount) {
+        if (amount == null) {
+            throw new IllegalArgumentException("Amount cannot be null");
+        }
+        this.balance = this.balance.add(amount);
     }
-
-
 }

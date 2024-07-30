@@ -1,5 +1,6 @@
 package com.cvetko.franka.simplepayment.model;
 
+import com.cvetko.franka.simplepayment.model.dto.AccountDTO;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -26,10 +27,9 @@ public class Customer {
     private String email;
     @OneToMany(mappedBy = "customer", cascade = CascadeType.MERGE, orphanRemoval = true)
     @JsonManagedReference
-    List<Account> accounts = new ArrayList<>();
+    List<AccountDTO> accounts = new ArrayList<>();
 
-    public void addAccount(Account account) {
+    public void addAccount(AccountDTO account) {
         accounts.add(account);
-        account.setCustomer(this);
     }
 }
