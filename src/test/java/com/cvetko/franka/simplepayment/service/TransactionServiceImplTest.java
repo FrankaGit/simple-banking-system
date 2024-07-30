@@ -15,11 +15,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -78,8 +78,8 @@ public class TransactionServiceImplTest {
     @Test
     void testProcessTransaction() {
         when(transactionRepository.save(any(Transaction.class))).thenReturn(transaction);
-        when(accountService.getAccountByNumber("SENDER123")).thenReturn(senderAccount);
-        when(accountService.getAccountByNumber("RECEIVER123")).thenReturn(receiverAccount);
+        when(accountService.findByAccountNumber("SENDER123").get()).thenReturn(senderAccount);
+        when(accountService.findByAccountNumber("RECEIVER123").get()).thenReturn(receiverAccount);
 
         Integer transactionId = transactionService.processTransaction(transaction);
 
@@ -88,10 +88,10 @@ public class TransactionServiceImplTest {
         assertEquals(new BigDecimal("700.00"), receiverAccount.getBalance());
 
         verify(transactionRepository, times(1)).save(transaction);
-        verify(accountService, times(1)).getAccountByNumber("SENDER123");
-        verify(accountService, times(1)).getAccountByNumber("RECEIVER123");
-        verify(accountService, times(1)).saveAccount(senderAccount);
-        verify(accountService, times(1)).saveAccount(receiverAccount);
+        verify(accountService, times(1)).findByAccountNumber("SENDER123");
+        verify(accountService, times(1)).findByAccountNumber("RECEIVER123");
+        verify(accountService, times(1)).save(senderAccount);
+        verify(accountService, times(1)).save(receiverAccount);
         verify(emailService, times(1)).sendEmailImpl(transaction, "SENDER123", senderAccount.getCustomer(), true, new BigDecimal("800.00"));
         verify(emailService, times(1)).sendEmailImpl(transaction, "RECEIVER123", receiverAccount.getCustomer(), false, new BigDecimal("700.00"));
     }

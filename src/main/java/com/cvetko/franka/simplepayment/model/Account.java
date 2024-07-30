@@ -17,10 +17,14 @@ public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer accountId;
+
     @Column(unique = true)
     private String accountNumber;
+
     private BigDecimal balance = new BigDecimal(0);
+
     private BigDecimal pastMonthTurnover = new BigDecimal(0);
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id")
     @JsonBackReference
@@ -35,5 +39,16 @@ public class Account {
         this.setAccountNumber(accountNumber);
     }
 
-
+    public synchronized void updateBalance(BigDecimal amount) {
+        if (amount == null) {
+            throw new IllegalArgumentException("Amount cannot be null");
+        }
+        this.balance = this.balance.add(amount);
+    }
+    public synchronized void updateTurnover(BigDecimal amount) {
+        if (amount == null) {
+            throw new IllegalArgumentException("Amount cannot be null");
+        }
+        this.pastMonthTurnover = this.pastMonthTurnover.add(amount);
+    }
 }

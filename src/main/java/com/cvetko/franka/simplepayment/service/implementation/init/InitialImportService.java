@@ -1,11 +1,11 @@
 package com.cvetko.franka.simplepayment.service.implementation.init;
 
+import com.cvetko.franka.simplepayment.model.Account;
 import com.cvetko.franka.simplepayment.model.Currency;
 import com.cvetko.franka.simplepayment.model.Customer;
 import com.cvetko.franka.simplepayment.model.Transaction;
-import com.cvetko.franka.simplepayment.model.dto.AccountDTO;
 import com.cvetko.franka.simplepayment.service.implementation.CustomerServiceImpl;
-import com.cvetko.franka.simplepayment.service.interfaces.AccountDtoService;
+import com.cvetko.franka.simplepayment.service.interfaces.AccountService;
 import com.cvetko.franka.simplepayment.service.interfaces.TransactionService;
 import com.cvetko.franka.simplepayment.utils.RandomUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +36,7 @@ public class InitialImportService implements Runnable {
     @Autowired
     TransactionService transactionService;
     @Autowired
-    AccountDtoService accountDtoService;
+    AccountService accountService;
     @Autowired
     CustomerServiceImpl customerService;
 
@@ -49,7 +49,7 @@ public class InitialImportService implements Runnable {
         
         List<Transaction> transactions = importAllTransactions(FILE_PATH);
         List<Customer> customers = customerService.createDummyCustomers(NUMBER_OF_CUSTOMERS);
-        Set<AccountDTO> accounts = retrieveUniqueAccountsFromTransactions(transactions);
+        Set<Account> accounts = retrieveUniqueAccountsFromTransactions(transactions);
 
         setCustomerAccounts(customers,accounts);
 
@@ -71,18 +71,19 @@ public class InitialImportService implements Runnable {
             e.printStackTrace();
         }
         executor.shutdown();
-        accountDtoService.saveAll(accounts);
+        accountService.saveAll(accounts);
+        accountService.calculateLastMonthTurnover(transactionService);
 
     }
 
 
-    private void processTransaction(Transaction t, Set<AccountDTO> accounts) {
+    private void processTransaction(Transaction t, Set<Account> accounts) {
 
-        Optional<AccountDTO> sender = accounts.stream()
+        Optional<Account> sender = accounts.stream()
                 .filter(a -> a.getAccountNumber().equals(t.getSenderAccount()))
                 .findFirst();
 
-        Optional<AccountDTO> receiver = accounts.stream()
+        Optional<Account> receiver = accounts.stream()
                 .filter(a -> a.getAccountNumber().equals(t.getReceiverAccount()))
                 .findFirst();
 
@@ -95,11 +96,11 @@ public class InitialImportService implements Runnable {
     }
 
 
-    private Set<AccountDTO> retrieveUniqueAccountsFromTransactions(List<Transaction> transactions) {
+    private Set<Account> retrieveUniqueAccountsFromTransactions(List<Transaction> transactions) {
         return transactions.stream()
                 .flatMap(t -> Stream.of(
-                        new AccountDTO(t.getSenderAccount()),
-                        new AccountDTO(t.getReceiverAccount())
+                        new Account(t.getSenderAccount()),
+                        new Account(t.getReceiverAccount())
                 ))
                 .collect(Collectors.toSet());
     }
@@ -129,7 +130,7 @@ public class InitialImportService implements Runnable {
 
         return transactions;
     }
-    private void setCustomerAccounts(List<Customer> customers, Set<AccountDTO> accounts) {
+    private void setCustomerAccounts(List<Customer> customers, Set<Account> accounts) {
         accounts.forEach(a -> a.setCustomer(RandomUtils.getRandomItem(customers)));
     }
 }

@@ -8,10 +8,10 @@ import com.cvetko.franka.simplepayment.service.interfaces.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,16 +20,41 @@ public class AccountServiceImpl implements AccountService {
     @Autowired
     AccountRepository accountRepository;
 
-
     @Override
-    public Account getAccountByNumber(String accountNumber) {
-        return accountRepository.findByAccountName(accountNumber);
+    public void saveAll(Iterable<Account> accounts) {
+        try {
+            accountRepository.saveAll(accounts);
+        } catch (Exception e) {
+            System.out.println("Exception while saving accounts " + e.getMessage());
+        }
+    }
+    @Override
+    public List<Account> findAll() {
+        try {
+            return accountRepository.findAll();
+        } catch (Exception e) {
+            System.out.println("Exception while finding accounts " + e.getMessage());
+            return null;
+        }
     }
 
     @Override
-    public Account saveAccount(Account account) {
-        return accountRepository.save(account);
+    public void save(Account account) {
+        try {
+            accountRepository.save(account);
+        } catch (Exception e) {
+            System.out.println("Exception while saving account " + e.getMessage());
+        }
+    }
 
+    @Override
+    public Optional<Account> findByAccountNumber(String accountNumber) {
+        try {
+            return accountRepository.findByAccountNumber(accountNumber);
+        } catch (Exception e){
+            System.out.println("Exception while finding account by account number");
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -37,9 +62,62 @@ public class AccountServiceImpl implements AccountService {
         return accountRepository.findAll();
     }
 
+
     @Override
-    public BigDecimal getLastMonthTurnOver(Account account, TransactionService transactionService) {
-        BigDecimal turnover = new BigDecimal(0);
+    public void calculateLastMonthTurnover(TransactionService transactionService) {
+        List<Account> accounts = findAll();
+        Date firstDayOfLastMonth = returnFirstDayOfLastMonth();
+        Date lastDayOfLastMonth =  returnLastDayOfLastMonth();
+
+        //for each account we will get all of the transactions filter by date
+        //then calculate the turnover depending on sender or receiver
+        accounts.parallelStream()
+                .forEach(account -> {
+                    List<Transaction> transactions = transactionService.fetchAllTransactionsForAccount(account);
+                    transactions = filterTransactionsByDate(transactions,firstDayOfLastMonth,lastDayOfLastMonth);
+
+                    if(transactions != null && !transactions.isEmpty()){
+                        transactions
+                                .parallelStream()
+                                .forEach(transaction -> {
+                            if (transaction.getSenderAccount().equals(account.getAccountNumber())){
+                                account.updateTurnover(transaction.getAmount().negate());
+                            }
+                            else{
+                                account.updateTurnover(transaction.getAmount());
+                            }
+                        });
+                    }
+                });
+        accountRepository.saveAll(accounts);
+    }
+
+    private List<Transaction> filterTransactionsByDate(List<Transaction> transactions, Date firstDayOfLastMonth, Date lastDayOfLastMonth) {
+        return transactions
+                .stream()
+                .filter(transaction -> {
+                    Date date = transaction.getTimestamp();
+                    return date != null && !date.before(firstDayOfLastMonth) && !date.after(lastDayOfLastMonth);
+                })
+                .collect(Collectors.toList());
+
+    }
+
+
+    private Date returnLastDayOfLastMonth() {
+        Calendar calendar = Calendar.getInstance();
+
+        calendar.set(Calendar.DAY_OF_MONTH, 1); //first day of this month
+        calendar.add(Calendar.MONTH, -1); //first day of last month
+        calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
+        calendar.set(Calendar.HOUR_OF_DAY, 23);
+        calendar.set(Calendar.MINUTE, 59);
+        calendar.set(Calendar.SECOND, 59);
+        calendar.set(Calendar.MILLISECOND, 999);
+        return calendar.getTime();
+    }
+
+    private Date returnFirstDayOfLastMonth() {
         Calendar calendar = Calendar.getInstance();
 
         calendar.set(Calendar.DAY_OF_MONTH, 1); //first day of this month
@@ -48,54 +126,8 @@ public class AccountServiceImpl implements AccountService {
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
-        Date firstDayOfLastMonth = calendar.getTime();
-
-        calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
-        calendar.set(Calendar.HOUR_OF_DAY, 23);
-        calendar.set(Calendar.MINUTE, 59);
-        calendar.set(Calendar.SECOND, 59);
-        calendar.set(Calendar.MILLISECOND, 999);
-        Date lastDayOfLastMonth = calendar.getTime();
-
-        List<Transaction> transactionsReceiver = transactionService.fetchReceiverTransactionsForAccount(account.getAccountNumber())
-                .stream()
-                .filter(transaction -> {
-                    Date date = transaction.getTimestamp();
-                    return date != null && !date.before(firstDayOfLastMonth) && !date.after(lastDayOfLastMonth);
-                })
-                .collect(Collectors.toList());
-
-        List<Transaction> transactionsSender = transactionService.fetchSenderTransactionsForAccount(account.getAccountNumber())
-                .stream()
-                .filter(transaction -> {
-                    Date date = transaction.getTimestamp();
-                    return date != null && !date.before(firstDayOfLastMonth) && !date.after(lastDayOfLastMonth);
-                })
-                .collect(Collectors.toList());
-
-        for (Transaction tran : transactionsReceiver) {
-            turnover = turnover.add(tran.getAmount());
-        }
-        for (Transaction tran : transactionsSender) {
-            turnover = turnover.subtract(tran.getAmount());
-        }
-        account.setPastMonthTurnover(turnover);
-        accountRepository.save(account);
-
-        return turnover;
+        return calendar.getTime();
     }
 
-    @Override
-    public void updateBalance(Account acc, TransactionService transactionService) {
-        BigDecimal balance = new BigDecimal(0);
-        for (Transaction t : transactionService.fetchReceiverTransactionsForAccount(acc.getAccountNumber())) {
-            balance = balance.add(t.getAmount());
-        }
-        for (Transaction t : transactionService.fetchSenderTransactionsForAccount(acc.getAccountNumber())) {
-            balance = balance.subtract(t.getAmount());
-        }
-        acc.setBalance(balance);
-        accountRepository.save(acc);
-    }
 
 }

@@ -2,19 +2,21 @@ package com.cvetko.franka.simplepayment.service.interfaces;
 
 import com.cvetko.franka.simplepayment.model.Account;
 
-import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 
 public interface AccountService {
 
-    Account getAccountByNumber(String accountNumber);
+    void saveAll(Iterable<Account> accounts);
 
-    Account saveAccount(Account account);
+    List<Account> findAll();
+
+    void save(Account account);
+
+    Optional<Account> findByAccountNumber(String accountNumber);
 
     List<Account> getAllAccounts();
 
-    BigDecimal getLastMonthTurnOver(Account account, TransactionService transactionService);
-
-    void updateBalance(Account acc, TransactionService transactionService);
+    void calculateLastMonthTurnover(TransactionService transactionService);
 }

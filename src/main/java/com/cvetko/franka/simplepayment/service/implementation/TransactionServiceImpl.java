@@ -33,8 +33,8 @@ public class TransactionServiceImpl implements TransactionService {
     @Transactional
     public Integer processTransaction(Transaction transaction) {
         Transaction trans = transactionRepository.save(transaction);
-        Account sender = accountService.getAccountByNumber(transaction.getSenderAccount());
-        Account receiver = accountService.getAccountByNumber(transaction.getReceiverAccount());
+        Account sender = accountService.findByAccountNumber(transaction.getSenderAccount()).get();
+        Account receiver = accountService.findByAccountNumber(transaction.getReceiverAccount()).get();
         updateBalances(transaction, sender, receiver);
         handleBothEmails(transaction, sender, receiver);
         return trans.getTransactionId();
@@ -93,6 +93,11 @@ public class TransactionServiceImpl implements TransactionService {
 
         return Optional.of(transactions);
     }
+    @Override
+    public List<Transaction> fetchAllTransactionsForAccount(Account account) {
+        return transactionRepository.getTransactionHistory(account.getAccountNumber());
+    }
+
 
     private void handleBothEmails(Transaction transaction, Account sender, Account receiver) {
         emailService.sendEmailImpl(transaction, sender.getAccountNumber(), sender.getCustomer(), true, sender.getBalance());
@@ -102,8 +107,8 @@ public class TransactionServiceImpl implements TransactionService {
     private void updateBalances(Transaction transaction, Account sender, Account receiver) {
         sender.setBalance(sender.getBalance().subtract(transaction.getAmount()));
         receiver.setBalance(receiver.getBalance().add(transaction.getAmount()));
-        accountService.saveAccount(sender);
-        accountService.saveAccount(receiver);
+        accountService.save(sender);
+        accountService.save(receiver);
 
     }
 

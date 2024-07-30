@@ -1,5 +1,6 @@
 package com.cvetko.franka.simplepayment.service.interfaces;
 
+import com.cvetko.franka.simplepayment.model.Account;
 import com.cvetko.franka.simplepayment.model.Customer;
 import com.cvetko.franka.simplepayment.model.Transaction;
 
@@ -24,4 +25,5 @@ public interface TransactionService {
 
     Integer processTransaction(Transaction transaction);
 
+    List<Transaction> fetchAllTransactionsForAccount(Account account);
 }
