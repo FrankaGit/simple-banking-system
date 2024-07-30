@@ -32,12 +32,17 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     public Integer processTransaction(Transaction transaction) {
-        Transaction trans = transactionRepository.save(transaction);
-        Account sender = accountService.findByAccountNumber(transaction.getSenderAccount()).get();
-        Account receiver = accountService.findByAccountNumber(transaction.getReceiverAccount()).get();
-        updateBalances(transaction, sender, receiver);
-        handleBothEmails(transaction, sender, receiver);
-        return trans.getTransactionId();
+
+        Optional<Account> sender = accountService.findByAccountNumber(transaction.getSenderAccount());
+        Optional<Account> receiver = accountService.findByAccountNumber(transaction.getReceiverAccount());
+        if(sender.isPresent() && receiver.isPresent())
+        {
+            Transaction trans = transactionRepository.save(transaction);
+            updateBalances(transaction, sender.get(), receiver.get());
+            handleBothEmails(transaction, sender.get(), receiver.get());
+            return trans.getTransactionId();
+        }
+        return null;
     }
 
     @Override
@@ -46,55 +51,29 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public Optional<List<Transaction>> getTransactionHistory(Customer customer) {
+    public List<Transaction> getTransactionHistory(Customer customer) {
         List<Transaction> transactions = new ArrayList<>();
         customer.getAccounts().forEach(account -> transactions.addAll(transactionRepository.getTransactionHistory(account.getAccountNumber())));
 
-        System.out.println(transactions.size());
-        return Optional.of(transactions);
+        return transactions;
     }
 
     @Override
-    public Optional<List<Transaction>> getTransactionHistoryFiltered(Customer customer, String filter_name, String filter_value) {
+    public List<Transaction> getTransactionHistoryFiltered(Customer customer, String filter_name, String filter_value) {
         if (filter_name.equalsIgnoreCase(FILTER_NAME)) {
             switch (filter_value.toUpperCase()) {
                 case FILTER_SENDER:
-                    return fetchSenderTransactions(customer);
+                    return findSenderTransactions(customer);
                 case FILTER_RECEIVER:
-                    return fetchReceiverTransactions(customer);
+                    return findReceiverTransactions(customer);
                 default:
             }
         }
-        return Optional.of(new ArrayList<>());
+        return new ArrayList<>();
     }
 
     @Override
-    public List<Transaction> fetchReceiverTransactionsForAccount(String account) {
-        return transactionRepository.findByReceiverAccount(account);
-    }
-
-    @Override
-    public List<Transaction> fetchSenderTransactionsForAccount(String account) {
-        return transactionRepository.findBySenderAccount(account);
-    }
-
-    @Override
-    public Optional<List<Transaction>> fetchSenderTransactions(Customer customer) {
-        List<Transaction> transactions = new ArrayList<>();
-        customer.getAccounts().forEach(account -> transactions.addAll(transactionRepository.findBySenderAccount(account.getAccountNumber())));
-
-        return Optional.of(transactions);
-    }
-
-    @Override
-    public Optional<List<Transaction>> fetchReceiverTransactions(Customer customer) {
-        List<Transaction> transactions = new ArrayList<>();
-        customer.getAccounts().forEach(account -> transactions.addAll(transactionRepository.findByReceiverAccount(account.getAccountNumber())));
-
-        return Optional.of(transactions);
-    }
-    @Override
-    public List<Transaction> fetchAllTransactionsForAccount(Account account) {
+    public List<Transaction> findAllTransactionsForAccount(Account account) {
         return transactionRepository.getTransactionHistory(account.getAccountNumber());
     }
 
@@ -105,11 +84,25 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private void updateBalances(Transaction transaction, Account sender, Account receiver) {
-        sender.setBalance(sender.getBalance().subtract(transaction.getAmount()));
-        receiver.setBalance(receiver.getBalance().add(transaction.getAmount()));
+        sender.updateBalance(transaction.getAmount().negate());
+        receiver.updateBalance(transaction.getAmount());
         accountService.save(sender);
         accountService.save(receiver);
 
+    }
+
+    private List<Transaction> findSenderTransactions(Customer customer) {
+        List<Transaction> transactions = new ArrayList<>();
+        customer.getAccounts().forEach(account -> transactions.addAll(transactionRepository.findBySenderAccount(account.getAccountNumber())));
+
+        return transactions;
+    }
+
+    private List<Transaction> findReceiverTransactions(Customer customer) {
+        List<Transaction> transactions = new ArrayList<>();
+        customer.getAccounts().forEach(account -> transactions.addAll(transactionRepository.findByReceiverAccount(account.getAccountNumber())));
+
+        return transactions;
     }
 
 

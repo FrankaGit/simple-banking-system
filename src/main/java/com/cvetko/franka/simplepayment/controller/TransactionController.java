@@ -22,19 +22,23 @@ public class TransactionController {
     CustomerServiceImpl customerService;
 
     @GetMapping("/transaction/history/{customerId}")
-    public ResponseEntity<List<Transaction>> getTransactionHistory(@Valid @PathVariable Integer customerId,
+    public ResponseEntity<?> getTransactionHistory(@Valid @PathVariable Integer customerId,
                                                                    @RequestParam(required = false, name = FILTER_NAME) String filterValue) {
 
-        Optional<List<Transaction>> transactionHistory = Optional.empty();
         Optional<Customer> customerById = customerService.findCustomerById(customerId);
 
-        if (filterValue != null && customerById.isPresent()) {
-            transactionHistory = transactionService.getTransactionHistoryFiltered(customerById.get(), FILTER_NAME, filterValue);
-        } else if (customerById.isPresent()) {
-            transactionHistory = transactionService.getTransactionHistory(customerById.get());
+        if (customerById.isPresent()) {
+            List<Transaction> transactionHistory;
+            if (filterValue != null) {
+                transactionHistory = transactionService.getTransactionHistoryFiltered(customerById.get(), FILTER_NAME, filterValue);
+            } else {
+                transactionHistory = transactionService.getTransactionHistory(customerById.get());
+            }
+            return ResponseEntity.ok(transactionHistory);
+        } else {
+            String errorMessage = "Customer not found with ID: " + customerId;
+            return ResponseEntity.status(404).body(errorMessage);
         }
-
-        return transactionHistory.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping("/transaction")

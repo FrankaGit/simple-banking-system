@@ -15,11 +15,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -96,24 +94,5 @@ public class TransactionServiceImplTest {
         verify(emailService, times(1)).sendEmailImpl(transaction, "RECEIVER123", receiverAccount.getCustomer(), false, new BigDecimal("700.00"));
     }
 
-    @Test
-    void testFetchReceiverTransactionsForAccount() {
-        when(transactionRepository.findByReceiverAccount("receiverAccount")).thenReturn(List.of(transaction));
-
-        List<Transaction> transactions = transactionService.fetchReceiverTransactionsForAccount("receiverAccount");
-
-        assertEquals(1, transactions.size()); // Assuming one transaction is returned
-        verify(transactionRepository, times(1)).findByReceiverAccount(anyString());
-    }
-
-    @Test
-    void testFetchSenderTransactionsForAccount() {
-        when(transactionRepository.findBySenderAccount("senderAccount")).thenReturn(List.of(transaction));
-
-        List<Transaction> transactions = transactionService.fetchSenderTransactionsForAccount("senderAccount");
-
-        assertEquals(1, transactions.size()); // Assuming one transaction is returned
-        verify(transactionRepository, times(1)).findBySenderAccount(anyString());
-    }
 
 }

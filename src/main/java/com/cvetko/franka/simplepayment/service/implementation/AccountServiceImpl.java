@@ -28,6 +28,7 @@ public class AccountServiceImpl implements AccountService {
             System.out.println("Exception while saving accounts " + e.getMessage());
         }
     }
+
     @Override
     public List<Account> findAll() {
         try {
@@ -51,7 +52,7 @@ public class AccountServiceImpl implements AccountService {
     public Optional<Account> findByAccountNumber(String accountNumber) {
         try {
             return accountRepository.findByAccountNumber(accountNumber);
-        } catch (Exception e){
+        } catch (Exception e) {
             System.out.println("Exception while finding account by account number");
             return Optional.empty();
         }
@@ -67,26 +68,25 @@ public class AccountServiceImpl implements AccountService {
     public void calculateLastMonthTurnover(TransactionService transactionService) {
         List<Account> accounts = findAll();
         Date firstDayOfLastMonth = returnFirstDayOfLastMonth();
-        Date lastDayOfLastMonth =  returnLastDayOfLastMonth();
+        Date lastDayOfLastMonth = returnLastDayOfLastMonth();
 
         //for each account we will get all of the transactions filter by date
         //then calculate the turnover depending on sender or receiver
         accounts.parallelStream()
                 .forEach(account -> {
-                    List<Transaction> transactions = transactionService.fetchAllTransactionsForAccount(account);
-                    transactions = filterTransactionsByDate(transactions,firstDayOfLastMonth,lastDayOfLastMonth);
+                    List<Transaction> transactions = transactionService.findAllTransactionsForAccount(account);
+                    transactions = filterTransactionsByDate(transactions, firstDayOfLastMonth, lastDayOfLastMonth);
 
-                    if(transactions != null && !transactions.isEmpty()){
+                    if (transactions != null && !transactions.isEmpty()) {
                         transactions
                                 .parallelStream()
                                 .forEach(transaction -> {
-                            if (transaction.getSenderAccount().equals(account.getAccountNumber())){
-                                account.updateTurnover(transaction.getAmount().negate());
-                            }
-                            else{
-                                account.updateTurnover(transaction.getAmount());
-                            }
-                        });
+                                    if (transaction.getSenderAccount().equals(account.getAccountNumber())) {
+                                        account.updateTurnover(transaction.getAmount().negate());
+                                    } else {
+                                        account.updateTurnover(transaction.getAmount());
+                                    }
+                                });
                     }
                 });
         accountRepository.saveAll(accounts);
@@ -102,7 +102,6 @@ public class AccountServiceImpl implements AccountService {
                 .collect(Collectors.toList());
 
     }
-
 
     private Date returnLastDayOfLastMonth() {
         Calendar calendar = Calendar.getInstance();

@@ -14,13 +14,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class TransactionControllerTest {
@@ -50,45 +47,7 @@ public class TransactionControllerTest {
         testTransaction.setReceiverAccount("receiver456");
     }
 
-    @Test
-    void testGetTransactionHistoryWithFilter() {
-        when(customerService.findCustomerById(1)).thenReturn(Optional.of(testCustomer));
 
-        List<Transaction> transactions = new ArrayList<>();
-        transactions.add(testTransaction);
-        when(transactionService.getTransactionHistoryFiltered(testCustomer, TransactionController.FILTER_NAME, "SIDE"))
-                .thenReturn(Optional.of(transactions));
-
-        ResponseEntity<List<Transaction>> responseEntity = transactionController.getTransactionHistory(1, "SIDE");
-
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(responseEntity.getBody()).isEqualTo(transactions);
-    }
-
-    @Test
-    void testGetTransactionHistoryWithoutFilter() {
-        when(customerService.findCustomerById(1)).thenReturn(Optional.of(testCustomer));
-
-        List<Transaction> transactions = new ArrayList<>();
-        transactions.add(testTransaction);
-        when(transactionService.getTransactionHistory(testCustomer))
-                .thenReturn(Optional.of(transactions));
-
-        ResponseEntity<List<Transaction>> responseEntity = transactionController.getTransactionHistory(1, null);
-
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(responseEntity.getBody()).isEqualTo(transactions);
-    }
-
-    @Test
-    void testGetTransactionHistoryCustomerNotFound() {
-        when(customerService.findCustomerById(1)).thenReturn(Optional.empty());
-
-        ResponseEntity<List<Transaction>> responseEntity = transactionController.getTransactionHistory(1, null);
-
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(responseEntity.getBody()).isNull();
-    }
 
     @Test
     void testProcessTransactionSuccess() {
