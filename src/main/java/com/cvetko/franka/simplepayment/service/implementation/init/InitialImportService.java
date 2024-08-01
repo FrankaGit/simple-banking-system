@@ -72,8 +72,6 @@ public class InitialImportService implements Runnable {
         }
         executor.shutdown();
         accountService.saveAll(accounts);
-        accountService.calculateLastMonthTurnover(transactionService);
-
     }
 
 
@@ -94,7 +92,6 @@ public class InitialImportService implements Runnable {
             transactionService.saveTransaction(t);
         }
     }
-
 
     private Set<Account> retrieveUniqueAccountsFromTransactions(List<Transaction> transactions) {
         return transactions.stream()

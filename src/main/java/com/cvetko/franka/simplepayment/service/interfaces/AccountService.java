@@ -18,5 +18,4 @@ public interface AccountService {
 
     List<Account> getAllAccounts();
 
-    void calculateLastMonthTurnover(TransactionService transactionService);
 }
