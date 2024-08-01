@@ -9,8 +9,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.util.Calendar;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,8 +27,8 @@ public class ScheduledTurnoverTask {
 
     public void calculateLastMonthTurnover() {
         List<Account> accounts = accountService.findAll();
-        Date firstDayOfLastMonth = returnFirstDayOfLastMonth();
-        Date lastDayOfLastMonth = returnLastDayOfLastMonth();
+        LocalDate firstDayOfLastMonth = returnFirstDayOfLastMonth();
+        LocalDate lastDayOfLastMonth = returnLastDayOfLastMonth();
 
         //for each account we will get all of the transactions filter by date
         //then calculate the turnover depending on sender or receiver
@@ -54,36 +53,23 @@ public class ScheduledTurnoverTask {
         accountService.saveAll(accounts);
     }
 
-    private Date returnLastDayOfLastMonth() {
-        Calendar calendar = Calendar.getInstance();
-
-        calendar.set(Calendar.DAY_OF_MONTH, 1); //first day of this month
-        calendar.add(Calendar.MONTH, -1); //first day of last month
-        calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
-        calendar.set(Calendar.HOUR_OF_DAY, 23);
-        calendar.set(Calendar.MINUTE, 59);
-        calendar.set(Calendar.SECOND, 59);
-        calendar.set(Calendar.MILLISECOND, 999);
-        return calendar.getTime();
+    private LocalDate returnLastDayOfLastMonth() {
+        LocalDate firstDayOfThisMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDate lastDayOfLastMonth = firstDayOfThisMonth.minusDays(1);
+        return lastDayOfLastMonth;
     }
 
-    private Date returnFirstDayOfLastMonth() {
-        Calendar calendar = Calendar.getInstance();
-
-        calendar.set(Calendar.DAY_OF_MONTH, 1); //first day of this month
-        calendar.add(Calendar.MONTH, -1); //first day of last month
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        return calendar.getTime();
+    private LocalDate returnFirstDayOfLastMonth() {
+        LocalDate firstDayOfThisMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDate firstDayOfLastMonth = firstDayOfThisMonth.minusMonths(1);
+        return firstDayOfLastMonth;
     }
-    private List<Transaction> filterTransactionsByDate(List<Transaction> transactions, Date firstDayOfLastMonth, Date lastDayOfLastMonth) {
+    private List<Transaction> filterTransactionsByDate(List<Transaction> transactions, LocalDate firstDayOfLastMonth, LocalDate lastDayOfLastMonth) {
         return transactions
                 .stream()
                 .filter(transaction -> {
-                    Date date = transaction.getTimestamp();
-                    return date != null && !date.before(firstDayOfLastMonth) && !date.after(lastDayOfLastMonth);
+                    LocalDate date = transaction.getTimestamp();
+                    return date != null && !date.isBefore(firstDayOfLastMonth) && !date.isAfter(lastDayOfLastMonth);
                 })
                 .collect(Collectors.toList());
 

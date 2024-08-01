@@ -15,7 +15,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.sql.Date;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -89,6 +90,11 @@ public class InitialImportService implements Runnable {
 
             sender.get().updateBalance(t.getAmount().negate());
             receiver.get().updateBalance(t.getAmount());
+
+            if(isWithinLastMonth(t.getTimestamp())) {
+                sender.get().updateTurnover(t.getAmount().negate());
+                receiver.get().updateTurnover(t.getAmount());
+            }
             transactionService.saveTransaction(t);
         }
     }
@@ -104,6 +110,7 @@ public class InitialImportService implements Runnable {
 
     public List<Transaction> importAllTransactions(String csvFile) {
         List<Transaction> transactions = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             String line;
@@ -117,7 +124,7 @@ public class InitialImportService implements Runnable {
                         new BigDecimal(data[3].trim()), // amount
                         Currency.valueOf(data[4].trim()), // currency
                         data[5].trim(), // message
-                        Date.valueOf(data[6].trim()) // timestamp
+                        LocalDate.parse(data[6].trim(),formatter) // timestamp
                 );
                 transactions.add(transaction);
             }
@@ -129,5 +136,15 @@ public class InitialImportService implements Runnable {
     }
     private void setCustomerAccounts(List<Customer> customers, Set<Account> accounts) {
         accounts.forEach(a -> a.setCustomer(RandomUtils.getRandomItem(customers)));
+    }
+    private boolean isWithinLastMonth(LocalDate transactionDate) {
+        if (transactionDate == null) {
+            return false;
+        }
+
+        LocalDate firstDayOfLastMonth = LocalDate.now().minusMonths(1).withDayOfMonth(1);
+        LocalDate lastDayOfLastMonth = firstDayOfLastMonth.withDayOfMonth(firstDayOfLastMonth.lengthOfMonth());
+
+        return !transactionDate.isBefore(firstDayOfLastMonth) && !transactionDate.isAfter(lastDayOfLastMonth);
     }
 }

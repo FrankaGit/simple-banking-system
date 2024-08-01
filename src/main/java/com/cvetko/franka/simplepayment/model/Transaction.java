@@ -8,7 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 @Entity
 @Data
@@ -32,9 +32,9 @@ public class Transaction {
     @NotNull
     private String message;
     @NotNull
-    private Date timestamp;
+    private LocalDate timestamp;
 
-    public Transaction(String senderAccountId, String receiverAccountId, BigDecimal amount, Currency currency, String message, Date timestamp) {
+    public Transaction(String senderAccountId, String receiverAccountId, BigDecimal amount, Currency currency, String message, LocalDate timestamp) {
         this.senderAccount = senderAccountId;
         this.receiverAccount = receiverAccountId;
         this.amount = amount;
@@ -49,6 +49,6 @@ public class Transaction {
         this.amount = amount;
         this.currency = currency;
         this.message = message;
-        this.timestamp = new Date();
+        this.timestamp = LocalDate.now();
     }
 }
