@@ -3,7 +3,6 @@ package com.cvetko.franka.simplepayment.controller;
 
 import com.cvetko.franka.simplepayment.model.Account;
 import com.cvetko.franka.simplepayment.service.interfaces.AccountService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,10 +11,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,23 +27,30 @@ public class AccountControllerTest {
     @InjectMocks
     private AccountController accountController;
 
-    private List<Account> mockAccounts;
-
-    @BeforeEach
-    void setUp() {
-        mockAccounts = Arrays.asList(
-                new Account(1, "00123"),
-                new Account(2, "00321")
-        );
+    @Test
+    public void testGetAccounts_NoContent() {
+        when(accountService.getAllAccounts()).thenReturn(new ArrayList<>());
+        ResponseEntity<List<Account>> response = accountController.getAccounts();
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+        assertNull(response.getBody());
     }
 
     @Test
-    void testGetAccounts() {
-        when(accountService.getAllAccounts()).thenReturn(mockAccounts);
+    public void testGetAccounts_Ok() {
+        List<Account> accounts = new ArrayList<>();
+        accounts.add(new Account(1, "Account1"));
+        accounts.add(new Account(2, "Account2"));
+        when(accountService.getAllAccounts()).thenReturn(accounts);
+        ResponseEntity<List<Account>> response = accountController.getAccounts();
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(accounts, response.getBody());
+    }
 
-        ResponseEntity<List<Account>> responseEntity = accountController.getAccounts();
-
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(responseEntity.getBody()).isEqualTo(mockAccounts);
+    @Test
+    public void testGetAccounts_InternalServerError() {
+        when(accountService.getAllAccounts()).thenThrow(new RuntimeException("Exception"));
+        ResponseEntity<List<Account>> response = accountController.getAccounts();
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertNull(response.getBody());
     }
 }
