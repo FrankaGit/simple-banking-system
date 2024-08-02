@@ -15,7 +15,7 @@ import java.util.Optional;
 @RestController
 public class TransactionController {
 
-    public static final String FILTER_NAME = "SIDE";
+    public static final String FILTER_NAME = "side";
     @Autowired
     TransactionServiceImpl transactionService;
     @Autowired
@@ -23,7 +23,7 @@ public class TransactionController {
 
     @GetMapping("/transaction/history/{customerId}")
     public ResponseEntity<?> getTransactionHistory(@Valid @PathVariable Integer customerId,
-                                                                   @RequestParam(required = false, name = FILTER_NAME) String filterValue) {
+                                                   @RequestParam(required = false, name = FILTER_NAME) String filterValue) {
 
         Optional<Customer> customerById = customerService.findCustomerById(customerId);
 
